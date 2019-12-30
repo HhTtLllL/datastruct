@@ -13,6 +13,7 @@
 #include <string.h>
 #include <fcntl.h>
 
+
 typedef struct
 {
 	char value[4];     //字符值
@@ -27,6 +28,13 @@ struct Node
 	char value[4];   //字符值
 	struct Node *Lchild;   //左结点
 	struct Node *Rchild;   //右节点
+};
+struct filehead
+{
+	int totallen;
+	int last;
+	int time;
+	int num;
 };
 
 int strncmp(char *a,char *b,int num)
@@ -253,6 +261,126 @@ void Huffmancode(struct Node *node,int len,HuffmanCode *arr,int num)
 	}
 }
 
+//将文件内容转为 Huffman
+
+void writecode(char *path,HuffmanCode *arr,int num,char *writepath)
+{
+	struct filehead head;
+	int fsource,faim;
+	char curvalue[3];  //读取当前字符
+	unsigned char save = 0;  //每次保存一个字节的长度
+	int len = 0;  //每次保存的一个字节已经存了多少长度
+	int totallen = 0;  //文件编码总长度
+	int last;  //最后一次写入时的位数
+
+	//总子节长度
+	for(int i = 0;i < num;i++)
+	{
+		totallen = totallen + arr[i].codelen * arr[i].time;
+	}
+	head.totallen = totallen;
+	
+
+	//计算最后一次写入多少位
+	last = totallen%8;
+	head.last = last;
+
+	head.num = num;
+	head.time = totallen / 8;
+
+	fsource = open(path,O_RDONLY);
+	faim = open(writepath,O_RDWR | O_CREAT,0644);
+
+	write(faim,&head,sizeof(head));
+	//写入字符值和字符频率
+	for(int i = 0;i < num;i++)
+	{
+		write(faim,&arr[i].value,sizeof(arr[i].value));
+		write(faim,&arr[i].time,sizeof(arr[i].time));
+	}
+
+	int read_count = 0;
+	char read_buf[1024];
+	memset(read_buf,0,sizeof(read_buf));
+	while((read_count = read(fsource,read_buf,1024)) && read_count > 0)
+	{
+		for(int i = 0;i < read_count;i++)
+		{
+			if(read_buf[i] >= 0 && read_buf[i] <= 126)
+			{
+				int j = 0;
+				while(true)
+				{
+					if(read_buf[i] == arr[j].value[0])
+					{
+						for(int k = 0;k < arr[j].codelen;k++)
+						{
+							//按位操作保存编码
+							if(len != 0) save = save << 1;
+
+							save = save | (arr[j].code[k] - '0');
+							len++;
+							//一个字节已存满,写入文件
+
+							if(len == 8)
+							{
+								write(faim,&save,sizeof(save));
+								save = 0;
+								len = 0;
+							}
+						}
+						break;
+					}
+					j++;
+				}
+			}
+			else
+			{
+				if((read_count - i) >= 3)
+				{
+					char temp[3];
+					memset(temp,0,sizeof(temp));
+					strncpy(temp,read_buf+i,3);
+					int j = 0;
+					while(true)
+					{
+						if(1 == strncmp(temp,arr[j].value,3))
+						{
+							for(int k = 0;k < arr[j].codelen;k++)
+							{
+								//按位操作保存编码
+								if(len != 0) save = save << 1;
+
+								save = save | (arr[j].code[k] - '0');
+								len++;
+								//一个字节已存满
+								if(len == 8)
+								{
+									write(faim,&save,sizeof(save));
+									save = 0;
+									len = 0;
+								}
+							}
+							break;
+						}
+						j++;
+					}
+				}
+				else
+				{
+					lseek(fsource,-read_count + i,SEEK_CUR);
+					break;
+				}
+			}
+		}
+	}
+	
+	if(len != 0) write(faim,&save,sizeof(save));
+
+	close(fsource);
+	close(faim);
+
+}
 
 
 int main()
@@ -261,13 +389,25 @@ int main()
 	memset(node,0,sizeof(node));
 	int num = 0;  //记录一共有多少组数
 	char path[100];
+	
 	scanf("%s",path);   //读取路径名
+	int pathlen = strlen(path);
+	char writepath[100];
+	strncpy(writepath,path,pathlen);
+	writepath[pathlen] = '.';
+	writepath[pathlen + 1] = 'H';
+	writepath[pathlen + 2] = 'z';
 
 	num = read_cnt(path,node);      
 
 	root = build(node,num);
 
 	Huffmancode(root,0,node,num);   //各个字符的 huffman 编码
+	
+	printf("len = %ld\n",strlen(path));
+
+
+	writecode(path,node,num,writepath);
 	return 0;
 }
 
