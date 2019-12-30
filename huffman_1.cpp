@@ -21,13 +21,13 @@ typedef struct
 	int codelen;       //字符编码长度
 }HuffmanCode;
 
-typedef struct
+struct Node
 {
 	int time;  //结点次数
 	char value[4];   //字符值
 	struct Node *Lchild;   //左结点
 	struct Node *Rchild;   //右节点
-}Node;
+};
 
 int strncmp(char *a,char *b,int num)
 {
@@ -140,9 +140,8 @@ repeat1: {}
 
 
 	printf("over\n");
-	
-	
 
+	return num;
 }
 
 struct Node *root;
@@ -154,7 +153,7 @@ struct Node* build(HuffmanCode *node,int num)
 
 
 	//初始化数组
-	for(int i = 0;i < n;i++)
+	for(int i = 0;i < num;i++)
 	{
 		arr[i] = (struct Node*)malloc(sizeof(struct Node));
 		strncpy(arr[i]->value,node[i].value,3);
@@ -163,9 +162,97 @@ struct Node* build(HuffmanCode *node,int num)
 	}
 
 
-	build
+	//build
+	for(int i = 0;i < num - 1;i++)
+	{
+		int m1 = -1,m2; //最小额两个权值在数组中下标
+
+		//将m1,m2指向头两棵树
+		for(int j = 0;j < num;j++)
+		{
+			if(m1 == -1 && arr[j] != NULL)
+			{
+				m1 = j;
+				continue;
+			}
+			if(arr[j] != NULL)
+			{
+				m2 = j;
+				break;
+			}
+		}
+
+		//比较权值大小，找到最小的两个
+		for(int j = m2;j < num;j++)
+		{
+			if(arr[j] != NULL && (arr[j]->time < arr[m1]->time))
+			{
+				m2 = m1;
+				m1 = j;
+			}
+			else if(arr[j] != NULL && (arr[j]->time < arr[m2]->time))
+				m2 = j;
+		}
+			//将两个权值最小的构成新树
+
+			temp = (struct Node *)malloc(sizeof(struct Node));
+			temp->Lchild = arr[m1];
+			temp->Rchild = arr[m2];
+
+			temp->time = arr[m1]->time + arr[m2]->time;
+			//temp->value = "\0";
+			strcpy(temp->value,"\0");
+
+			//将新树加入数组
+			arr[m1] = temp;
+			arr[m2] = NULL;
+	}
+	free(arr);
+
+	return temp;   //最终temp为树根
 
 }
+
+void Huffmancode(struct Node *node,int len,HuffmanCode *arr,int num)
+{
+	static char code[10000];   //编码
+
+	//左儿子 不为空，编码为 0
+	if(node->Lchild != NULL)
+	{
+		code[len] = '0';
+		code[len + 1] = '\0';
+		Huffmancode(node->Lchild,len + 1,arr,num);  //递归
+	}
+
+	//右儿子不为空，编码为1   
+	if(node->Rchild != NULL)
+	{
+		code[len] = '1';
+		code[len + 1] = '\0';
+		Huffmancode(node->Rchild,len + 1,arr,num);
+	}
+	else
+	{
+		for(int i = 0;i < num;i++)
+		{
+			//将编码复制给数组里的元素
+			if(strcmp(arr[i].value,node->value))
+			{
+				printf("111\n");
+				strcpy(arr[i].code,code);
+				arr[i].codelen = 0;
+				for(int j = 0;arr[i].code[j] != '\0';j++)
+				{
+					arr[i].codelen++;
+				}
+
+				return ;
+			}
+		}
+	}
+}
+
 
 
 int main()
@@ -178,6 +265,9 @@ int main()
 
 	num = read_cnt(path,node);      
 
+	root = build(node,num);
+
+	Huffmancode(root,0,node,num);   //各个字符的 huffman 编码
 	return 0;
 }
 
