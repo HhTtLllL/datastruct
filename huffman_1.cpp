@@ -70,7 +70,7 @@ int  read_cnt(char *path,HuffmanCode *node)
 			if(read_buf[i] >= 0 && read_buf[i] <= 126)
 			{
 
-				printf("字母\n");
+				//printf("字母\n");
 				//判断是否有重复
 				for(int j = 0;j < num;j++)
 				{
@@ -124,25 +124,16 @@ repeat1: {}
 					lseek(fd,-read_count + i,SEEK_CUR);
 					break;
 				}
-
-
-				
 			}
-
-
-//			letter[read_buf[i]]++;
 		}
-
-
-		//for(int i = 0;i < read_count;i++) printf("%d",read_buf[i]);
 	}
 
 	close(fd);
 	
-	printf("num = %d\n",num);
+//	printf("num = %d\n",num);
 	for(int i = 0;i < num;i++)
 	{
-		printf("value = %s  ,time = %d\n",node[i].value,node[i].time);
+		printf("i = %d  ,,value = %s  ,time = %d\n",i,node[i].value,node[i].time);
 	}
 
 
@@ -217,6 +208,12 @@ struct Node* build(HuffmanCode *node,int num)
 	}
 	free(arr);
 
+
+	for(int i = 0;i < num;i++)
+	{
+		printf("i = %d  ,,value = %s  ,time = %d\n",i,node[i].value,node[i].time);
+	}
+
 	return temp;   //最终temp为树根
 
 }
@@ -245,9 +242,9 @@ void Huffmancode(struct Node *node,int len,HuffmanCode *arr,int num)
 		for(int i = 0;i < num;i++)
 		{
 			//将编码复制给数组里的元素
-			if(strcmp(arr[i].value,node->value))
+			if(!strcmp(arr[i].value,node->value))
 			{
-				printf("111\n");
+		//		printf("value = %s,,,node->value = %s\n",arr[i].value,node->value);
 				strcpy(arr[i].code,code);
 				arr[i].codelen = 0;
 				for(int j = 0;arr[i].code[j] != '\0';j++)
@@ -295,6 +292,7 @@ void writecode(char *path,HuffmanCode *arr,int num,char *writepath)
 	//写入字符值和字符频率
 	for(int i = 0;i < num;i++)
 	{
+		printf("writevalue = %s,time = %d\n",arr[i].value,arr[i].time);
 		write(faim,&arr[i].value,sizeof(arr[i].value));
 		write(faim,&arr[i].time,sizeof(arr[i].time));
 	}
@@ -302,6 +300,7 @@ void writecode(char *path,HuffmanCode *arr,int num,char *writepath)
 	int read_count = 0;
 	char read_buf[1024];
 	memset(read_buf,0,sizeof(read_buf));
+	//printf("306\n");
 	while((read_count = read(fsource,read_buf,1024)) && read_count > 0)
 	{
 		for(int i = 0;i < read_count;i++)
@@ -311,6 +310,8 @@ void writecode(char *path,HuffmanCode *arr,int num,char *writepath)
 				int j = 0;
 				while(true)
 				{
+		//			printf("j = %d\n",j);
+		//			printf("read_buf = %c,,,arr.value = %c\n",read_buf[i],arr[j].value[0]);
 					if(read_buf[i] == arr[j].value[0])
 					{
 						for(int k = 0;k < arr[j].codelen;k++)
@@ -344,6 +345,9 @@ void writecode(char *path,HuffmanCode *arr,int num,char *writepath)
 					int j = 0;
 					while(true)
 					{
+						printf("j = %d   ",j);
+				//		printf("temp = %s\n",temp);
+				//		printf("value = %s\n",arr[j].value);
 						if(1 == strncmp(temp,arr[j].value,3))
 						{
 							for(int k = 0;k < arr[j].codelen;k++)
@@ -365,6 +369,7 @@ void writecode(char *path,HuffmanCode *arr,int num,char *writepath)
 						}
 						j++;
 					}
+					i += 2;
 				}
 				else
 				{
@@ -374,14 +379,91 @@ void writecode(char *path,HuffmanCode *arr,int num,char *writepath)
 			}
 		}
 	}
-	
 	if(len != 0) write(faim,&save,sizeof(save));
-
 	close(fsource);
 	close(faim);
 
 }
 
+//译码
+//fsource 为原文件名， *arr用于保存数据数组，aim为目标文件名
+void Decode()
+{
+	int curtime = 0;//统计一共译码的个数
+
+	char sourcepath[100];
+	char aimpath[100];
+	printf("输入解压文件名:");
+	scanf("%s",sourcepath);
+	printf("输入目标文件名:");
+	scanf("%s",aimpath);
+	char read_buf[1024];
+	memset(read_buf,0,sizeof(read_buf));
+	int read_count = 0;
+	HuffmanCode arr[2000];
+
+	int fsource,faim;
+	fsource = open(sourcepath,O_RDONLY);
+	struct filehead head;
+	read(fsource,&head,sizeof(head));
+
+	for(int i = 0;i < head.num;i++)
+	{
+		read(fsource,&arr[i].value,sizeof(arr[i].value));
+		read(fsource,&arr[i].time,sizeof(arr[i].time));
+		printf("readvalue = %s,readtime = %d\n",arr[i].value,arr[i].time);
+	}
+
+	struct Node *root = build(arr,head.num);
+	Huffmancode(root,0,arr,head.num);
+	
+	struct Node*pNow = root; //当前结点
+	
+	unsigned char temp;  //每次读一个字节
+	faim = open(aimpath,O_RDWR | O_CREAT,0644);
+
+	while((read_count = read(fsource,read_buf,1024)) && read_count > 0)
+	{
+		unsigned char ifLast;//用于判断是否到达文件末尾
+
+		for(int i = 0;i < read_count;i++)
+		{
+			temp = read_buf[i];
+			int j;
+			if(curtime < head.time)
+			{
+				curtime++;
+				j = 7;
+			}
+			else 
+			{
+				j = head.last - 1;
+			}
+
+			for(;j >= 0;j--)
+			{
+				if((temp >> j & 1) == 0) pNow = pNow->Lchild;
+				else pNow = pNow->Rchild;
+				
+				if(pNow->Lchild == NULL && pNow->Rchild == NULL) //到了叶子结点
+				{
+					printf("writevalue = %s\n",pNow->value);
+					write(faim,&pNow->value,sizeof(pNow->value));
+					pNow = root;
+				}
+			}
+
+	//		temp = read_buf[i];
+		}
+	}
+	
+	close(fsource);
+	close(faim);
+
+
+
+	return ;
+}
 
 int main()
 {
@@ -397,6 +479,7 @@ int main()
 	writepath[pathlen] = '.';
 	writepath[pathlen + 1] = 'H';
 	writepath[pathlen + 2] = 'z';
+	writepath[pathlen + 3] = '\0';
 
 	num = read_cnt(path,node);      
 
@@ -404,10 +487,28 @@ int main()
 
 	Huffmancode(root,0,node,num);   //各个字符的 huffman 编码
 	
+	for(int i = 0;i < num;i++)
+	{
+		printf("i = %d  ,,value = %s  ,time = %d\n",i,node[i].value,node[i].time);
+	}
+
 	printf("len = %ld\n",strlen(path));
 
-
 	writecode(path,node,num,writepath);
+
+
+	printf("输入一个数\n");
+	int select;
+	char ch;
+	scanf("%d",&select);
+	while((ch = getchar()) != '\n');
+	if(select == 1)
+	{
+		Decode();
+	}
+
+
+
 	return 0;
 }
 
