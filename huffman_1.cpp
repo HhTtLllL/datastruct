@@ -16,7 +16,7 @@
 
 typedef struct
 {
-	char value[4];     //字符值
+	char value[3];     //字符值
 	char code[100];    //字符编码
 	int time;          //字符出现的次数
 	int codelen;       //字符编码长度
@@ -25,7 +25,7 @@ typedef struct
 struct Node
 {
 	int time;  //结点次数
-	char value[4];   //字符值
+	char value[3];   //字符值
 	struct Node *Lchild;   //左结点
 	struct Node *Rchild;   //右节点
 };
@@ -82,6 +82,7 @@ int  read_cnt(char *path,HuffmanCode *node)
 				}
 				//如果没有重复
 				strncpy(node[num].value,read_buf + i,1);
+				node[num].value[1] = '\0';
 				node[num].time = 1;
 				num++;
 repeat:{}
@@ -448,7 +449,11 @@ void Decode()
 				if(pNow->Lchild == NULL && pNow->Rchild == NULL) //到了叶子结点
 				{
 					printf("writevalue = %s\n",pNow->value);
-					write(faim,&pNow->value,sizeof(pNow->value));
+					if(pNow->value[0] >= 0 && pNow->value[0] <= 126)
+					{
+						write(faim,&pNow->value[0],sizeof(char));
+					}
+					else write(faim,&pNow->value,sizeof(pNow->value));
 					pNow = root;
 				}
 			}
@@ -511,5 +516,3 @@ int main()
 
 	return 0;
 }
-
-
