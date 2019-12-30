@@ -21,6 +21,14 @@ typedef struct
 	int codelen;       //字符编码长度
 }HuffmanCode;
 
+typedef struct
+{
+	int time;  //结点次数
+	char value[4];   //字符值
+	struct Node *Lchild;   //左结点
+	struct Node *Rchild;   //右节点
+}Node;
+
 int strncmp(char *a,char *b,int num)
 {
 	for(int i = 0;i < num;i++)
@@ -35,20 +43,17 @@ int strncmp(char *a,char *b,int num)
 	return 1;
 }
 
-int main()
-{
-	HuffmanCode node[1000];
-	memset(node,0,sizeof(node));
 
+int  read_cnt(char *path,HuffmanCode *node)
+{
 	//读文件中每个单词出现的频率 存进time数组
 	int read_count = 0;
-	char read_buf[1024];
+	char read_buf[1024]; 
 	memset(read_buf,0,sizeof(read_buf));
-	char path[100];
-	scanf("%s",path);
+
 	int fd = open(path,O_RDONLY);
-	char letter[300];
-	int num = 0;
+
+	int num = 0; //统计一共有多少种数
 	while((read_count = read(fd,read_buf,1024)) && read_count > 0)
 	{
 	//	printf("read_count = %d\n",read_count);
@@ -83,7 +88,7 @@ repeat:{}
 					char temp[3];
 					memset(temp,0,sizeof(temp));
 					strncpy(temp,read_buf+i,3);
-					printf("temp = %s\n",temp);
+			//		printf("temp = %s\n",temp);
 					
 					//判断是否有重复
 					for(int j = 0;j < num;j++)
@@ -129,7 +134,7 @@ repeat1: {}
 	printf("num = %d\n",num);
 	for(int i = 0;i < num;i++)
 	{
-		printf("value = %s\n",node[i].value);
+		printf("value = %s  ,time = %d\n",node[i].value,node[i].time);
 	}
 
 
@@ -137,6 +142,42 @@ repeat1: {}
 	printf("over\n");
 	
 	
+
+}
+
+struct Node *root;
+
+struct Node* build(HuffmanCode *node,int num)
+{
+	struct Node **arr,*temp;  //arr为造数用数组，temp 为最重返回的树
+	arr = (struct Node **)malloc(num * sizeof(struct Node));
+
+
+	//初始化数组
+	for(int i = 0;i < n;i++)
+	{
+		arr[i] = (struct Node*)malloc(sizeof(struct Node));
+		strncpy(arr[i]->value,node[i].value,3);
+		arr[i]->time = node[i].time;
+		arr[i]->Lchild = arr[i]->Rchild = NULL;
+	}
+
+
+	build
+
+}
+
+
+int main()
+{
+	HuffmanCode node[1000];
+	memset(node,0,sizeof(node));
+	int num = 0;  //记录一共有多少组数
+	char path[100];
+	scanf("%s",path);   //读取路径名
+
+	num = read_cnt(path,node);      
+
 	return 0;
 }
 
