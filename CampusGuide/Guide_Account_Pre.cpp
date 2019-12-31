@@ -17,7 +17,7 @@ int Guide_Account()
 	mysql_init(&mysql);
 
 	if(!mysql_real_connect(&mysql,"0.0.0.0","root","073848","guide",0,NULL,0)) printf("连接数据库失败\n");
-	//if(mysql_query(&mysql,"set name utf8")) printf("设置中文失败\n");
+	if(mysql_set_character_set(&mysql,"utf8")) printf("设置中文失败\n");
 
 	char account[20];
 	char password[20];

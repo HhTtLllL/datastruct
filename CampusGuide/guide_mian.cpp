@@ -11,6 +11,7 @@
 #include "./Guide_UI.h"
 #include "./Guide_Account_Pre.h"
 #define fflush while((ch = getchar()) != '\n');
+#define MAXVEX 100
 char ch;
 
 int main()
