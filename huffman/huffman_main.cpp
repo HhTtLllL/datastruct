@@ -25,9 +25,13 @@ int main()
 		switch(select)
 		{
 			case 1:
-				commpression();break;
+				commpression();
+				printf("压缩成功\n");
+				break;
 			case 2:
-				Decode();break;
+				Decode();
+				printf("解压成功\n");
+				break;
 		}
 
 	}while(select != 3);

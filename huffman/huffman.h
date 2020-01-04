@@ -24,6 +24,7 @@ struct filehead
 	int last;
 	int time;
 	int num;
+	char ctime[100];
 };
 
 int strncmp(char *a,char *b,int num);   //比较　a 和 b字符串的　　前num个字节 

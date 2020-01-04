@@ -6,6 +6,8 @@
 // Created Time: 2019年12月30日 星期一 23时01分27秒
 //=============================================================
 //!/usr/bin/python
+#include <sys/stat.h>
+#include <time.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -55,14 +57,23 @@ void commpression()
 
         Huffmancode(root,0,node,num);   //各个字符的 huffman 编码
 
-        /*for(int i = 0;i < num;i++)
+        for(int i = 0;i < num;i++)
         {
                 printf("i = %d  ,,value = %s  ,time = %d\n",i,node[i].value,node[i].time);
-        }*/
+        }
 
 //      printf("len = %ld\n",strlen(path));
 
         writecode(path,node,num,writepath);
+
+	struct stat statbuf;
+	int size1,size2;
+	stat(path,&statbuf);
+	size1 = statbuf.st_size;
+	stat(writepath,&statbuf);
+	size2 = statbuf.st_size;
+	printf("压缩比:%lf\n",(size2*1.0) / (size1*1.0));
+	printf("文件创建时间:%s\n",ctime(&statbuf.st_atime));
 
 }
 
@@ -303,6 +314,9 @@ void writecode(char *path,HuffmanCode *arr,int num,char *writepath)
 	//计算最后一次写入多少位
 	last = totallen%8;
 	head.last = last;
+	struct stat statbuf;
+	stat(writepath,&statbuf);
+	strcpy(head.ctime,ctime(&statbuf.st_atime));
 
 	head.num = num;
 	head.time = totallen / 8;
@@ -311,6 +325,7 @@ void writecode(char *path,HuffmanCode *arr,int num,char *writepath)
 	faim = open(writepath,O_RDWR | O_CREAT,0644);
 
 	write(faim,&head,sizeof(head));
+	
 	//写入字符值和字符频率
 	for(int i = 0;i < num;i++)
 	{
@@ -420,9 +435,14 @@ void Decode()
 	printf("输入解压文件名:");
 	scanf("%s",sourcepath);
 	fflush;
-	printf("输入目标文件名:");
-	scanf("%s",aimpath);
-	fflush;
+	int len = strlen(sourcepath);
+	strncpy(aimpath,sourcepath,len);
+	aimpath[len - 3] = '_';
+	aimpath[len - 2] = '1';
+	aimpath[len - 1] = '\0';
+	//printf("输入目标文件名:");
+	//scanf("%s",aimpath);
+	//fflush;
 
 	char read_buf[1024];
 	memset(read_buf,0,sizeof(read_buf));
@@ -433,7 +453,7 @@ void Decode()
 	fsource = open(sourcepath,O_RDONLY);
 	struct filehead head;
 	read(fsource,&head,sizeof(head));
-
+	//printf("文件压缩时间:%s\n",head.ctime);
 	for(int i = 0;i < head.num;i++)
 	{
 		read(fsource,&arr[i].value,sizeof(arr[i].value));
