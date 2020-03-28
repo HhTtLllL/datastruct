@@ -7,10 +7,54 @@
 //=============================================================
 //!/usr/bin/python
 
+/*　 二分搜索树的局限性　 */
+
+/* 同样的数据对应不同的二分搜索树，假如出现一根树枝。二分搜索树就退化为O(n)
+ * 
+ * 解决方案--平衡二叉树 --红黑树(红黑树是平衡二叉树的一种实现)
+ *
+ * 除此之外，还有其他实现方式
+ *   2-3tree, AVL tree,Splay tree(伸展树)
+ *
+ *   平衡二叉树和堆的结合 treap
+ *
+ *   trie 字典树
+ * 
+ *
+ *
+ * */
+
+
+
+
+
+//不支持重复元素的二分搜素树
+/* 支持重复元素的思路 */
+//思路一: 改变判断条件，右子树为 <= 　左子树改为 >  (空间不够节省)
+//思路二：给node 维护一个计数器 --cnt
+
+
 #include <iostream>
 #include <cassert>
 #include <queue>
 
+
+/*
+ * 二分搜索树的顺序性
+ * 
+ * 1. 找最大值，最小值
+ * 2. 可以找到一个结点的前驱和后继
+ *
+ *    在找不到 x 的前提下
+ * 3. lower_bound(最接近 x 的小于x 的值),upper_bound(最接近 x 的大于x 的值)
+ * 
+ * 二分搜索树的   rank
+ * 二分搜索树的   select
+ *
+ *
+ * */
+
+//作为查找表
 
 using namespace std;
 
@@ -31,6 +75,14 @@ class BST
                                 this->value = value;
                                 this->left = this->right = NULL;
                         }
+
+			Node(Node *node)
+			{
+				this->key = node->key;
+				this->value = node->value;
+				this->left = node->left;
+				this->right = node->right;
+			}
                 };
                 Node* root;
                 int count;
@@ -135,6 +187,12 @@ class BST
 
 			if( root )
 				root = removeMax(root);
+		}
+
+		//从二叉树中删除键值为key的节点
+		void remove(Key key)
+		{
+			root = remove( root , key);
 		}
 
 		
@@ -290,7 +348,69 @@ class BST
 
 			return node;
 		}
+		
+		//删除掉以node为根的二分搜索树中键值为key的节点
+		//返回删除结点后新的二分搜索树的根
 
+		Node* remove(Node* node,Key key)
+		{
+			//先找到 key所在的结点
+			if(NULL == node ) return NULL;
+
+			if( key < node->key )
+			{
+				node->left = remove(node->left,key);
+
+				return node;
+			}
+			else if( key > node->key )
+			{
+				node->right = remove(node->right, key);
+
+				return node;
+			}
+			else //如果等于
+			{
+				if( NULL == node->left )
+				{
+					Node *rightNode = node->right;
+
+					delete node;
+					count--;
+					
+					return rightNode;
+				}
+
+				if( NULL == node->right )
+				{
+					Node *leftNode = node->left;
+
+					delete node;
+					count--;
+					
+					return leftNode;
+				}
+
+				//先保存要删除的结点	
+				Node* delNode = node;
+
+				//找到node的右子树的相应的最小值，作为要删除结点的后继
+				Node *successor =new Node(minimum(node->right));
+
+				count++; //新创建了一个结点
+
+				//注意，successor保存的是当前最小的结点，然后在这里又将这个结点删除
+				//此时，successor中的数据已经被删除了。
+				//所以我们需要一个备份，
+				successor->right = removeMin(node->right);
+				successor->left = node->right;
+
+				delete delNode;
+				count--;
+
+				return successor;
+			}
+		}
 
 
 
