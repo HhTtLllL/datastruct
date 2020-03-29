@@ -16,6 +16,8 @@
 
 using namespace std;
 
+
+//查找快，并麻烦
 namespace UF1{
 	class UnionFind
 	{
